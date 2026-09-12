@@ -131,6 +131,36 @@
     const MIC_HTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg> <span>Mic</span>';
     const STOP_HTML = '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg> <span>Stop</span>';
 
+    // Native speech bridge: Android WebView has no Web Speech API, so the
+    // host app exposes window.AndroidSpeech when running inside the APK.
+    function nativeSpeech() {
+        const b = window.AndroidSpeech;
+        if (b && typeof b.startListening === "function" && typeof b.stopListening === "function") return b;
+        return null;
+    }
+
+    function startNativeVoice() {
+        startMicUI();
+        try { nativeSpeech().startListening(); }
+        catch (e) { stopMicUI(); }
+    }
+
+    // Called by the Android host app with the recognized text.
+    function onNativeSpeechResult(text) {
+        stopMicUI();
+        if (text) {
+            input.value = text;
+            handleAIRequest();
+        }
+    }
+
+    // Called by the Android host app when recognition ends or fails.
+    function onNativeSpeechError(_code) { stopMicUI(); }
+    function onNativeSpeechEnd() { stopMicUI(); }
+    window.onNativeSpeechResult = onNativeSpeechResult;
+    window.onNativeSpeechError = onNativeSpeechError;
+    window.onNativeSpeechEnd = onNativeSpeechEnd;
+
     function getRecognition() {
         if (recognition) return recognition;
         const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -149,6 +179,16 @@
     }
 
     function toggleVoice() {
+        const bridge = nativeSpeech();
+        if (bridge) {
+            if (!isListening) {
+                startNativeVoice();
+            } else {
+                try { bridge.stopListening(); } catch (e) { /* host replies via callback */ }
+                stopMicUI();
+            }
+            return;
+        }
         const rec = getRecognition();
         if (!rec) {
             alert("Speech recognition is not supported in this browser.");
