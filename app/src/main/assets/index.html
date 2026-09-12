@@ -2,106 +2,245 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#121212">
-    <title>Chetan's AI Assistant</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
+    <meta name="theme-color" content="#0d0d0f">
+    <title>Chetan</title>
     <script defer src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/dompurify@3.0.9/dist/purify.min.js"></script>
     <style>
+        :root {
+            --bg: #0d0d0f;
+            --surface: #141416;
+            --composer: #1b1b1e;
+            --bubble: #222226;
+            --border: #232327;
+            --border-soft: #2a2a30;
+            --text: #ececed;
+            --text-2: #a7a7ad;
+            --text-3: #6e6e75;
+            --accent: #b8a77e;
+            --danger: #b04a3a;
+            --radius: 14px;
+        }
         * { box-sizing: border-box; }
+        html, body { height: 100%; }
         body {
             font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            margin: 0; padding: 4px; display: flex; justify-content: center;
+            margin: 0; padding: 0; display: flex; justify-content: center;
             min-height: 100vh; min-height: 100dvh;
-            background: #121212;
+            background: var(--bg);
+            color: var(--text);
             overflow-x: hidden;
+            -webkit-text-size-adjust: 100%;
+        }
+        .sr-only {
+            position: absolute; width: 1px; height: 1px;
+            margin: -1px; padding: 0; overflow: hidden;
+            clip: rect(0 0 0 0); white-space: nowrap; border: 0;
         }
         .container {
-            width: 100%; max-width: 600px; height: 98vh; height: 98dvh;
+            width: 100%; max-width: 680px; height: 100vh; height: 100dvh;
             display: flex; flex-direction: column;
-            background: #1e1e20;
-            border-radius: 14px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
-            overflow: hidden; border: 1px solid #333;
+            background: var(--surface);
+            overflow: hidden; position: relative;
         }
-        .header {
-            background: linear-gradient(135deg, #007bff, #0056d2);
-            color: white; padding: 10px 12px; text-align: center;
-            font-weight: 700; font-size: 1rem; letter-spacing: 1px;
-            text-transform: uppercase;
+        @media (min-width: 720px) {
+            body { padding: 12px; }
+            .container { height: calc(100vh - 24px); height: calc(100dvh - 24px); border: 1px solid var(--border); border-radius: 16px; }
         }
-        .brand { display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .logo-orb { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
-            background: #00d2ff;
-            flex-shrink: 0; }
-        .brand-text { font-size: 1.05rem; font-weight: 700; letter-spacing: 2px; }
-        .status-pill { display: inline-flex; align-items: center; gap: 6px; margin-top: 5px;
-            font-size: 0.62rem; font-weight: 600; letter-spacing: 1.5px;
-            background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2);
-            padding: 3px 9px; border-radius: 999px; }
-        .status-dot { width: 7px; height: 7px; border-radius: 50%; background: #00ff88; }
-        .eq { display: inline-flex; align-items: flex-end; gap: 2px; height: 14px; margin-left: 6px; }
-        .eq i { width: 3px; border-radius: 2px; background: #fff; opacity: 0.9; display: block; }
-        .eq i:nth-child(1) { height: 7px; } .eq i:nth-child(2) { height: 12px; }
-        .eq i:nth-child(3) { height: 9px; } .eq i:nth-child(4) { height: 13px; }
+        /* --- minimal top bar --- */
+        .topbar {
+            display: flex; align-items: center; justify-content: space-between;
+            min-height: 52px; padding: 6px 8px 6px 16px; flex-shrink: 0;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+        }
+        .wordmark { font-size: 0.82rem; font-weight: 650; letter-spacing: 0.04em; color: var(--text); }
+        .icon-btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 40px; height: 40px; border-radius: 10px;
+            background: transparent; border: none; cursor: pointer;
+            color: var(--text-2);
+        }
+        .icon-btn:hover { background: rgba(255,255,255,0.06); color: var(--text); }
+        .icon-btn svg { width: 18px; height: 18px; flex-shrink: 0; }
+        button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+        /* --- conversation --- */
         #chat-window {
-            flex-grow: 1; overflow-y: auto; padding: 10px;
-            display: flex; flex-direction: column; gap: 8px;
-            background: #121212;
+            flex-grow: 1; overflow-y: auto; overscroll-behavior: contain;
+            padding: 16px 16px 12px;
+            display: flex; flex-direction: column; gap: 14px;
+            background: var(--surface);
         }
-        .msg { padding: 8px 12px; border-radius: 12px; font-size: 0.9rem; max-width: 86%; line-height: 1.45; word-wrap: break-word; overflow-wrap: anywhere; }
-        .user { align-self: flex-end; background: #007bff; color: white; border-bottom-right-radius: 4px; }
-        .ai { align-self: flex-start; background: #2a2a2d; color: #e0e0e0; border-bottom-left-radius: 4px; border: 1px solid #3d3d40; }
-        .msg p { margin: 6px 0; }
-        .msg pre { background: #000; color: #00ff00; padding: 8px; border-radius: 8px; overflow-x: auto; font-size: 0.8rem; border: 1px solid #333; margin: 6px 0; }
-        .msg code { font-family: Consolas, monospace; background: rgba(255,255,255,0.1); padding: 1px 4px; border-radius: 4px; color: #ff79c6; }
-        .msg.typing { opacity: 0.7; font-style: italic; }
-        .input-area { padding: 8px 10px 10px; border-top: 1px solid #333; background: #1e1e20; }
+        .empty {
+            margin: auto; text-align: center; padding: 24px 20px;
+            display: flex; flex-direction: column; gap: 8px; align-items: center;
+        }
+        .empty h1 { font-size: 1.05rem; font-weight: 650; letter-spacing: 0.02em; margin: 0; color: var(--text); }
+        .empty p { font-size: 0.86rem; line-height: 1.55; margin: 0; color: var(--text-2); max-width: 34ch; }
+        .empty .hint { font-size: 0.75rem; color: var(--text-3); }
+        .sys-note {
+            align-self: center; font-size: 0.76rem; color: var(--text-3);
+            background: transparent; border: 1px solid var(--border);
+            padding: 5px 12px; border-radius: 999px;
+        }
+        .msg { font-size: 0.94rem; line-height: 1.7; word-wrap: break-word; overflow-wrap: anywhere; }
+        .user {
+            align-self: flex-end; max-width: 82%;
+            background: #1e1e22; color: var(--text-2);
+            padding: 8px 13px; border-radius: var(--radius);
+            border-bottom-right-radius: 4px;
+            font-size: 0.88rem; line-height: 1.6; white-space: pre-wrap;
+        }
+        .ai { align-self: stretch; color: var(--text); padding: 2px 0; }
+        .ai > :first-child { margin-top: 0; }
+        .ai > :last-child { margin-bottom: 0; }
+        .msg p { margin: 0.7em 0; }
+        .msg h1, .msg h2, .msg h3, .msg h4 { line-height: 1.35; margin: 1.05em 0 0.45em; font-weight: 650; letter-spacing: 0.005em; }
+        .msg h1 { font-size: 1.14rem; } .msg h2 { font-size: 1.05rem; } .msg h3 { font-size: 0.98rem; } .msg h4 { font-size: 0.94rem; color: var(--text-2); }
+        .msg strong { font-weight: 650; color: var(--text); }
+        .msg ul, .msg ol { margin: 0.65em 0; padding-left: 1.4em; }
+        .msg li { margin: 0.32em 0; padding-left: 0.1em; }
+        .msg li::marker { color: var(--text-2); }
+        .msg li > ul, .msg li > ol { margin: 0.3em 0; }
+        .msg a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+        .msg a:hover { opacity: 0.85; }
+        .msg blockquote { margin: 0.75em 0; padding: 2px 0 2px 12px; border-left: 2px solid var(--border-soft); color: var(--text-2); }
+        .msg blockquote p { margin: 0.4em 0; }
+        .msg pre {
+            background: #0a0a0c; color: #d7d7db;
+            padding: 12px 14px; border-radius: 10px; overflow-x: auto;
+            font-size: 0.8rem; line-height: 1.65; border: 1px solid var(--border); margin: 0.75em 0;
+            tab-size: 4;
+        }
+        .msg code { font-family: Consolas, monospace; background: rgba(255,255,255,0.08); padding: 1px 5px; border-radius: 5px; font-size: 0.86em; word-break: break-word; }
+        .msg pre code { background: transparent; padding: 0; font-size: 1em; word-break: normal; }
+        .msg table { display: block; width: max-content; max-width: 100%; overflow-x: auto; border-collapse: collapse; margin: 0.8em 0; font-size: 0.84rem; line-height: 1.55; }
+        .msg th, .msg td { border: 1px solid var(--border-soft); padding: 7px 11px; text-align: left; white-space: nowrap; }
+        .msg th { background: rgba(255,255,255,0.04); font-weight: 650; }
+        .msg hr { border: none; border-top: 1px solid var(--border); margin: 1em 0; }
+        /* restrained loading indicator: three dots, opacity only */
+        .loading { display: flex; align-items: center; min-height: 28px; }
+        .dots { display: inline-flex; gap: 6px; }
+        .dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--text-2); opacity: 0.25; animation: dotFade 1.2s ease-in-out infinite; }
+        .dots i:nth-child(2) { animation-delay: 0.2s; }
+        .dots i:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes dotFade { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
+        /* subtle per-response actions, kept visually quiet */
+        .ai-actions { display: flex; gap: 2px; margin-top: -8px; }
+        .act {
+            display: inline-flex; align-items: center; gap: 5px;
+            background: transparent; border: none; cursor: pointer;
+            color: var(--text-3); font-size: 0.74rem; font-weight: 600;
+            padding: 6px 8px; border-radius: 8px; min-height: 32px;
+        }
+        .act:hover { color: var(--text-2); background: rgba(255,255,255,0.05); }
+        .act svg { width: 14px; height: 14px; flex-shrink: 0; }
+        /* suggestion chips on the empty state */
+        .chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 6px; }
+        .chip {
+            background: transparent; border: 1px solid var(--border-soft); cursor: pointer;
+            color: var(--text-2); font-size: 0.8rem; padding: 8px 14px; border-radius: 999px;
+        }
+        .chip:hover { color: var(--text); border-color: var(--text-3); }
+        /* scroll-to-latest: small floating control, shown only when away from latest */
+        #latestBtn {
+            position: absolute; right: 14px; bottom: 118px; transform: translateY(6px);
+            width: 36px; height: 36px; border-radius: 50%;
+            background: var(--composer); border: 1px solid var(--border-soft); color: var(--text-2);
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
+            opacity: 0; pointer-events: none;
+        }
+        #latestBtn.visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
+        #latestBtn:hover { color: var(--text); border-color: var(--text-3); }
+        #latestBtn svg { width: 16px; height: 16px; }
+        /* --- composer --- */
+        .input-area {
+            padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+        .composer {
+            background: var(--composer);
+            border: 1px solid var(--border-soft);
+            border-radius: 16px;
+            padding: 6px 6px 6px 14px;
+        }
+        .composer:focus-within { border-color: var(--text-3); }
         textarea#userInput {
-            width: 100%; border: 1px solid #333; border-radius: 10px;
-            padding: 9px 10px; resize: none; font-family: inherit; font-size: 0.92rem;
-            outline: none; background: #2a2a2d; color: white; display: block;
+            width: 100%; border: none; background: transparent;
+            padding: 10px 4px 4px 0; resize: none; font-family: inherit; font-size: 0.95rem; line-height: 1.55;
+            outline: none; color: var(--text); display: block;
+            min-height: 44px; max-height: 140px;
         }
-        textarea#userInput:focus { border-color: #00d2ff; }
-        .btn-group { display: flex; gap: 6px; margin-top: 8px; }
-        button { flex: 1; padding: 9px 8px; border: none; border-radius: 10px; cursor: pointer; font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; gap: 6px; }
-        #sendBtn { background: #007bff; color: white; }
-        #micBtn { background: #333; color: white; border: 1px solid #444; }
-        #micBtn.recording { background: #c93a22; border-color: transparent; }
-        #clearBtn { background: #222; color: #888; flex: 0.4; }
-        button:disabled { background: #444 !important; color: #888; cursor: not-allowed; }
-        button svg { width: 16px; height: 16px; flex-shrink: 0; }
+        textarea#userInput::placeholder { color: var(--text-3); }
+        .composer-actions { display: flex; align-items: center; gap: 4px; padding-top: 2px; }
+        .composer-actions .spacer { flex-grow: 1; }
+        #micBtn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+            min-width: 40px; height: 40px; padding: 0 8px;
+            background: transparent; border: none; border-radius: 10px; cursor: pointer;
+            color: var(--text-2); font-size: 0.82rem; font-weight: 600;
+        }
+        #micBtn:hover { background: rgba(255,255,255,0.06); color: var(--text); }
+        #micBtn svg { width: 18px; height: 18px; flex-shrink: 0; }
+        #micBtn.recording { color: var(--danger); }
+        #sendBtn {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 40px; height: 40px; border: none; border-radius: 12px; cursor: pointer;
+            background: var(--text); color: #111;
+        }
+        #sendBtn:hover { filter: brightness(0.92); }
+        #sendBtn:disabled { opacity: 0.35; cursor: not-allowed; filter: none; }
+        #sendBtn, #micBtn, .icon-btn, .chip, .act, #latestBtn { transition: background-color 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s; }
+        #sendBtn svg { width: 18px; height: 18px; flex-shrink: 0; }
         #chat-window::-webkit-scrollbar { width: 5px; }
-        #chat-window::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+        #chat-window::-webkit-scrollbar-thumb { background: var(--border-soft); border-radius: 10px; }
         @media (max-width: 480px) {
-            body { padding: 2px; }
-            .container { height: 99vh; height: 99dvh; border-radius: 10px; }
-            .msg { max-width: 90%; font-size: 0.88rem; }
+            #chat-window { padding: 14px 14px 10px; }
+            .ai { font-size: 1rem; }
+            .user { max-width: 88%; }
+            #latestBtn { bottom: 122px; right: 12px; }
+        }
+        @media (max-height: 500px) {
+            .topbar { min-height: 44px; }
+            #chat-window { padding-top: 10px; gap: 10px; }
+            .empty { padding: 12px; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .dots i { animation: none; opacity: 0.7; }
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="header">
-        <div class="brand">
-            <div class="logo-orb">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" fill="white"/></svg>
-            </div>
-            <div class="brand-text">CHETAN</div>
-            <div class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
-        </div>
-        <div class="status-pill"><span class="status-dot"></span> AI POWERED ASSISTANT • ONLINE</div>
+    <div class="topbar">
+        <div class="wordmark">Chetan</div>
+        <button id="clearBtn" class="icon-btn" title="Clear conversation" aria-label="Clear conversation"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></button>
     </div>
     <div id="chat-window">
-        <div class="msg ai">Hello Chetan! I'm ready. Typing a message or using the mic will get us started.</div>
+        <div class="empty" id="emptyState">
+            <h1>Chetan</h1>
+            <p>Ask anything.</p>
+            <div class="chips">
+                <button type="button" class="chip">Explain a topic</button>
+                <button type="button" class="chip">Write a draft</button>
+                <button type="button" class="chip">Summarise text</button>
+            </div>
+            <p class="hint">Enter to send · Shift + Enter for a new line</p>
+        </div>
     </div>
+    <button id="latestBtn" title="Scroll to latest" aria-label="Scroll to latest"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M19 12l-7 7-7-7"/></svg></button>
     <div class="input-area">
-        <textarea id="userInput" placeholder="Ask me anything..." rows="1"></textarea>
-        <div class="btn-group">
-            <button id="clearBtn" title="Clear chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg> Clear</button>
-            <button id="micBtn" title="Voice input"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg> <span>Mic</span></button>
-            <button id="sendBtn" title="Send message"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.4 20.4l17.5-8.4L3.4 3.6l2.6 7.1 9.1 1.3-9.1 1.3-2.6 7.1z"/></svg> <span id="sendLabel">Send</span></button>
+        <div class="composer">
+            <textarea id="userInput" placeholder="Message..." rows="1" aria-label="Message" enterkeyhint="send"></textarea>
+            <div class="composer-actions">
+                <button id="micBtn" title="Voice input"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg> <span>Mic</span></button>
+                <span class="spacer"></span>
+                <button id="sendBtn" title="Send message" aria-label="Send message"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg> <span id="sendLabel" class="sr-only">Send</span></button>
+            </div>
         </div>
     </div>
 </div>
@@ -124,6 +263,11 @@
     const sendLabel = document.getElementById("sendLabel");
     const micBtn = document.getElementById("micBtn");
     const clearBtn = document.getElementById("clearBtn");
+    const latestBtn = document.getElementById("latestBtn");
+    const EMPTY_HTML = '<div class="empty" id="emptyState"><h1>Chetan</h1><p>Ask anything.</p><div class="chips"><button type="button" class="chip">Explain a topic</button><button type="button" class="chip">Write a draft</button><button type="button" class="chip">Summarise text</button></div><p class="hint">Enter to send · Shift + Enter for a new line</p></div>';
+    const LOADING_HTML = '<span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="sr-only">Loading</span>';
+    const COPY_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+    const REGEN_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M3 21v-5h5"/></svg>';
 
     // --- Voice Input Logic (lazy init: no mic cost on page load) ---
     let recognition = null;
@@ -265,22 +409,33 @@
         return reply;
     }
 
+    // --- Scroll helpers: never fight the user. Only move the viewport for
+    // --- user-initiated sends, and reveal a response from its top, not its end.
+    function isNearBottom(px = 140) {
+        return chatWin.scrollHeight - (chatWin.scrollTop + chatWin.clientHeight) < px;
+    }
+
+    function updateLatestBtn() {
+        const away = chatWin.scrollHeight - (chatWin.scrollTop + chatWin.clientHeight) > 160;
+        latestBtn.classList.toggle("visible", away);
+    }
+
+    function scrollToResponseTop(el) {
+        // Position the viewport at the first line of the new response.
+        const top = el.getBoundingClientRect().top - chatWin.getBoundingClientRect().top + chatWin.scrollTop - 12;
+        chatWin.scrollTop = Math.max(0, top);
+    }
+
+    function dismissEmpty() {
+        const e = document.getElementById("emptyState");
+        if (e) e.remove();
+    }
+
     // --- Core Request Logic (Cerebras primary, Gemini fallback) ---
-    async function handleAIRequest() {
-        const text = input.value.trim();
-
-        if (!text) return;
-
-        appendChatBubble('user', text);
-        memory.push({ role: "user", text: text });
-        if (memory.length > MAX_HISTORY_TURNS * 2) memory = memory.slice(-MAX_HISTORY_TURNS * 2);
-
-        input.value = "";
-        sendBtn.disabled = true;
-        sendLabel.textContent = "...";
-
-        const loadingEl = appendChatBubble('ai', "_Thinking..._", true);
-
+    // Runs one model completion for the prompt already stored in memory.
+    // Returns the new bubble (success or error) so callers can position the
+    // viewport and attach response actions. Backend flow itself is unchanged.
+    async function completeResponse(loadingEl) {
         try {
             let aiReply;
             let cerebrasErr = null;
@@ -297,15 +452,43 @@
             }
 
             loadingEl.remove();
-            appendChatBubble('ai', aiReply);
+            const replyEl = appendChatBubble('ai', aiReply);
+            replyEl._raw = aiReply;
             memory.push({ role: "model", text: aiReply });
+            return replyEl;
 
         } catch (err) {
             console.error(err);
             loadingEl.remove();
             // remove failed user turn so next retry doesn't stack two users in a row (breaks Gemini turn order)
             if (memory.length && memory[memory.length - 1].role === "user") memory.pop();
-            appendChatBubble('ai', `❌ Error: ${err.message || "Could not connect to API."}`);
+            return appendChatBubble('ai', `❌ Error: ${err.message || "Could not connect to API."}`);
+        }
+    }
+
+    async function handleAIRequest() {
+        const text = input.value.trim();
+
+        if (!text) return;
+
+        dismissEmpty();
+        const follow = isNearBottom();
+        appendChatBubble('user', text);
+        if (follow) chatWin.scrollTop = chatWin.scrollHeight;
+        memory.push({ role: "user", text: text });
+        if (memory.length > MAX_HISTORY_TURNS * 2) memory = memory.slice(-MAX_HISTORY_TURNS * 2);
+
+        input.value = "";
+        autoGrow();
+        sendBtn.disabled = true;
+        sendLabel.textContent = "...";
+
+        const loadingEl = appendChatBubble('ai', "", true);
+
+        try {
+            const replyEl = await completeResponse(loadingEl);
+            if (replyEl._raw !== undefined) attachResponseActions(replyEl);
+            if (isNearBottom()) scrollToResponseTop(replyEl);
         } finally {
             sendBtn.disabled = false;
             sendLabel.textContent = "Send";
@@ -314,9 +497,11 @@
 
     function appendChatBubble(type, text, isLoading = false) {
         const bubble = document.createElement("div");
-        bubble.className = `msg ${type}` + (isLoading ? " typing" : "");
+        bubble.className = `msg ${type}` + (isLoading ? " loading" : "");
 
-        if (type === 'ai') {
+        if (isLoading) {
+            bubble.innerHTML = LOADING_HTML;
+        } else if (type === 'ai') {
             const html = (window.marked) ? marked.parse(text) : text;
             bubble.innerHTML = (window.DOMPurify) ? DOMPurify.sanitize(html) : html;
         } else {
@@ -324,21 +509,110 @@
         }
 
         chatWin.appendChild(bubble);
-        chatWin.scrollTop = chatWin.scrollHeight; // instant scroll: no smooth-scroll animation cost
+        updateLatestBtn();
         return bubble;
     }
 
     function clearConversation() {
         if (confirm("Clear chat history?")) {
             memory = [];
-            chatWin.innerHTML = '<div class="msg ai">Memory cleared. Ready for new questions.</div>';
+            chatWin.innerHTML = EMPTY_HTML;
+            chatWin.scrollTop = 0;
+            updateLatestBtn();
         }
+    }
+
+    function autoGrow() {
+        input.style.height = "auto";
+        input.style.height = Math.min(input.scrollHeight, 140) + "px";
     }
 
     sendBtn.addEventListener("click", handleAIRequest);
     micBtn.addEventListener("click", toggleVoice);
     clearBtn.addEventListener("click", clearConversation);
+    latestBtn.addEventListener("click", () => {
+        chatWin.scrollTo({ top: chatWin.scrollHeight, behavior: "smooth" });
+    });
+    chatWin.addEventListener("scroll", updateLatestBtn, { passive: true });
+    chatWin.addEventListener("click", (e) => {
+        const chip = e.target.closest(".chip");
+        if (!chip) return;
+        input.value = chip.textContent.trim() + " ";
+        autoGrow();
+        input.focus();
+    });
 
+    // --- Subtle per-response actions: Copy under every answer, Regenerate on latest only ---
+    function attachResponseActions(bubble) {
+        const prev = chatWin.querySelector('[data-act="regen"]');
+        if (prev) prev.remove();
+        const bar = document.createElement("div");
+        bar.className = "ai-actions";
+        const copy = document.createElement("button");
+        copy.type = "button";
+        copy.className = "act";
+        copy.dataset.act = "copy";
+        copy.setAttribute("aria-label", "Copy response");
+        copy.innerHTML = COPY_SVG + "<span>Copy</span>";
+        copy.addEventListener("click", () => copyResponse(copy, bubble));
+        const regen = document.createElement("button");
+        regen.type = "button";
+        regen.className = "act";
+        regen.dataset.act = "regen";
+        regen.setAttribute("aria-label", "Regenerate response");
+        regen.innerHTML = REGEN_SVG + "<span>Regenerate</span>";
+        regen.addEventListener("click", () => regenerateLatest(bubble));
+        bar.append(copy, regen);
+        bubble.after(bar);
+    }
+
+    function removeActionsFor(bubble) {
+        const next = bubble.nextElementSibling;
+        if (next && next.classList.contains("ai-actions")) next.remove();
+    }
+
+    async function copyResponse(btn, bubble) {
+        const label = btn.querySelector("span");
+        const done = () => { label.textContent = "Copied"; setTimeout(() => { label.textContent = "Copy"; }, 1200); };
+        const raw = bubble._raw !== undefined ? bubble._raw : bubble.innerText;
+        try {
+            await navigator.clipboard.writeText(raw);
+            done();
+        } catch (e) {
+            const ta = document.createElement("textarea");
+            ta.value = raw;
+            document.body.appendChild(ta);
+            ta.select();
+            try { document.execCommand("copy"); done(); } catch (_e) { /* clipboard unavailable */ }
+            ta.remove();
+        }
+    }
+
+    async function regenerateLatest(bubble) {
+        if (sendBtn.disabled || bubble._raw === undefined) return;
+        // Drop the matching model turn so history order stays valid for the retry.
+        for (let i = memory.length - 1; i >= 0; i--) {
+            if (memory[i].role === "model") { memory.splice(i, 1); break; }
+        }
+        removeActionsFor(bubble);
+        const loadingEl = document.createElement("div");
+        loadingEl.className = "msg ai loading";
+        loadingEl.innerHTML = LOADING_HTML;
+        bubble.replaceWith(loadingEl);
+        updateLatestBtn();
+        sendBtn.disabled = true;
+        sendLabel.textContent = "...";
+        try {
+            const replyEl = await completeResponse(loadingEl);
+            if (replyEl._raw !== undefined) attachResponseActions(replyEl);
+            if (isNearBottom()) scrollToResponseTop(replyEl);
+        } finally {
+            sendBtn.disabled = false;
+            sendLabel.textContent = "Send";
+        }
+    }
+
+    input.addEventListener("input", autoGrow);
     input.addEventListener("keydown", (e) => {
         if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
